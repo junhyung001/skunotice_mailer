@@ -1,0 +1,29 @@
+name: Daily Notice Check
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 매일 0시 UTC (한국 9시)
+  workflow_dispatch:
+
+jobs:
+  check_notice:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run notice checker
+        env:
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
+          RECEIVER_EMAILS: ${{ secrets.RECEIVER_EMAILS }}
+        run: python main.py
