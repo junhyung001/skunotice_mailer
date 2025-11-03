@@ -4,19 +4,18 @@ import cloudscraper
 from bs4 import BeautifulSoup
 import logging
 
-# SSL 관련 경고 숨기기
+# ⚙️ SSL 관련 경고 무시
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
 warnings.filterwarnings("ignore", category=UserWarning, module='urllib3')
 
 def fetch_notices():
     url = "https://www.sungkyul.ac.kr/computer/4101/subview.do"
 
-    # ✅ 기본 SSL context 생성 후 검증 완전 비활성화
-    ctx = ssl.create_default_context()
+    # ✅ SSLContext 직접 생성 (GitHub Actions에서도 완벽 작동)
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
 
-    # ✅ scraper 생성 (Cloudflare 우회)
     scraper = cloudscraper.create_scraper(
         ssl_context=ctx,
         browser={"browser": "chrome", "platform": "windows", "mobile": False}
