@@ -1,15 +1,23 @@
+import warnings
+import certifi
 import cloudscraper
 from bs4 import BeautifulSoup
-import certifi
+import logging
 
-response = scraper.get(url, timeout=10, verify=certifi.where())
+# SSL 경고 무시 (Unverified HTTPS warning 숨김)
+warnings.filterwarnings("ignore", message="Unverified HTTPS request")
 
 def fetch_notices():
     url = "https://www.sungkyul.ac.kr/computer/4101/subview.do"
-    scraper = cloudscraper.create_scraper()
+
+    # ✅ scraper 객체 먼저 생성
+    scraper = cloudscraper.create_scraper(
+        browser={"browser": "chrome", "platform": "windows", "mobile": False}
+    )
 
     try:
-        response = scraper.get(url, timeout=10)
+        # ✅ SSL 인증서 검증 경로를 certifi로 지정
+        response = scraper.get(url, timeout=10, verify=certifi.where())
         response.raise_for_status()
     except Exception as e:
         logging.error(f"❌ 크롤링 중 오류 발생: {e}")
@@ -23,7 +31,7 @@ def fetch_notices():
         return []
 
     results = []
-    for row in rows[:5]:
+    for row in rows[:5]:  # 최신 5개 공지
         a_tag = row.select_one("td.td-subject a")
         if not a_tag:
             continue
@@ -35,3 +43,7 @@ def fetch_notices():
 
     logging.info(f"✅ {len(results)}개의 공지를 가져왔습니다.")
     return results
+
+
+if __name__ == "__main__":
+    fetch_notices()
