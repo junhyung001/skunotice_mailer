@@ -1,6 +1,8 @@
 import cloudscraper
 from bs4 import BeautifulSoup
-import logging
+import certifi
+
+response = scraper.get(url, timeout=10, verify=certifi.where())
 
 def fetch_notices():
     url = "https://www.sungkyul.ac.kr/computer/4101/subview.do"
