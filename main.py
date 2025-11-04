@@ -9,6 +9,19 @@ from mailer import send_mail
 DB_PATH = "db.sqlite3"
 
 def setup_logger():
+    # ✅ logs 폴더 자동 생성 (로컬 + GitHub Actions 모두 대응)
+    os.makedirs("logs", exist_ok=True)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="[%(asctime)s] %(levelname)s: %(message)s",
+        handlers=[
+            logging.StreamHandler(),
+            logging.FileHandler("logs/notice.log", encoding="utf-8")
+        ]
+    )
+
+def setup_logger():
     logging.basicConfig(
         level=logging.INFO,
         format="[%(asctime)s] %(levelname)s: %(message)s",
