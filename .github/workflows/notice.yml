@@ -2,7 +2,7 @@ name: Daily Notice Check
 
 on:
   schedule:
-    - cron: '0 0 * * *'   # 매일 0시 UTC (한국 9시)
+    - cron: '0 0 * * *'   # 매일 0시 UTC (한국 오전 9시)
   workflow_dispatch:
 
 jobs:
@@ -12,6 +12,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # ✅ GitHub Actions 런너에 최신 CA 인증서 설치
+      - name: Install CA certificates
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ca-certificates
+          sudo update-ca-certificates
 
       - name: Set up Python
         uses: actions/setup-python@v5

@@ -12,7 +12,10 @@ def setup_logger():
     logging.basicConfig(
         level=logging.INFO,
         format="[%(asctime)s] %(levelname)s: %(message)s",
-        handlers=[logging.StreamHandler()]
+        handlers=[
+            logging.StreamHandler(),
+            logging.FileHandler("logs/notice.log", encoding="utf-8")
+        ]
     )
 
 def init_db():
@@ -51,9 +54,8 @@ def main():
         notices = fetch_notices()
         new_notices = [n for n in notices if is_new(cur, n["title"])]
 
-        if not new_notices:
-            logging.info("🔔 새로운 공지가 없습니다.")
-        else:
+        # ✅ 새 공지가 있는 경우
+        if new_notices:
             html_body = """
             <html>
             <head>
@@ -75,7 +77,6 @@ def main():
             for n in new_notices:
                 html_body += f'<li><a href="{n["link"]}" target="_blank">{n["title"]}</a></li>'
                 save(cur, n["title"], n["link"])
-
             html_body += """
                 </ul>
                 <div class="footer">
@@ -95,9 +96,31 @@ def main():
             )
             logging.info(f"✅ {len(new_notices)}개의 새 공지를 메일로 전송했습니다!")
 
+        # ✅ 새 공지가 없는 경우 — 시스템 정상 리포트 발송
+        else:
+            logging.info("🔔 새로운 공지가 없습니다. 정상 작동 리포트 메일 발송.")
+            report_html = f"""
+            <html>
+            <body>
+                <h3>✅ 시스템 정상 작동 리포트</h3>
+                <p>오늘({datetime.now().strftime("%Y-%m-%d %H:%M:%S")}) 기준,</p>
+                <p>새로운 공지는 없었지만 시스템이 정상적으로 실행되었습니다.</p>
+                <p>로그 위치: logs/notice.log</p>
+                <hr>
+                <p style="font-size:12px; color:#666;">본 메일은 자동 발송되었습니다.</p>
+            </body>
+            </html>
+            """
+            send_mail(
+                subject="[성결대 공지 시스템] 오늘은 새로운 공지가 없습니다.",
+                html_body=report_html,
+                recipients=[sender_email],  # 관리자에게만 전송
+                sender_email=sender_email,
+                sender_password=sender_password
+            )
+
     except Exception as e:
         logging.error(f"🚨 메인 루틴 오류: {e}")
-        # 오류 발생 시 관리자에게 에러 리포트 메일 전송
         error_report = f"""
         <html><body>
         <h3>❌ 자동 공지 메일 시스템 오류 발생</h3>
@@ -106,7 +129,7 @@ def main():
         </body></html>
         """
         send_mail(
-            subject="[성결대 공지 메일 시스템] 오류 발생",
+            subject="[성결대 공지 시스템] 오류 발생",
             html_body=error_report,
             recipients=[sender_email],
             sender_email=sender_email,

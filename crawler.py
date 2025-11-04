@@ -1,28 +1,32 @@
 import warnings
 import ssl
+import certifi
+import urllib3
 import cloudscraper
 from bs4 import BeautifulSoup
 import logging
 
 # ⚙️ SSL 관련 경고 무시
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
-warnings.filterwarnings("ignore", category=UserWarning, module='urllib3')
+warnings.filterwarnings("ignore", category=UserWarning, module="urllib3")
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def fetch_notices():
     url = "https://www.sungkyul.ac.kr/computer/4101/subview.do"
 
-    # ✅ SSLContext 직접 생성 (GitHub Actions에서도 완벽 작동)
-    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
+    # ✅ SSLContext 구성 (모든 환경 호환)
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
 
+    # ✅ Cloudflare 우회 + SSLContext 적용
     scraper = cloudscraper.create_scraper(
-        ssl_context=ctx,
+        ssl_context=ssl_context,
         browser={"browser": "chrome", "platform": "windows", "mobile": False}
     )
 
     try:
-        response = scraper.get(url, timeout=10)
+        response = scraper.get(url, timeout=10, verify=False)
         response.raise_for_status()
     except Exception as e:
         logging.error(f"❌ 크롤링 중 오류 발생: {e}")

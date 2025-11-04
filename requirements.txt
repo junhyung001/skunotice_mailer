@@ -1,5 +1,11 @@
-requests
-beautifulsoup4
-cloudscraper
-python-dotenv
-dotenv
+# --- Core dependencies ---
+beautifulsoup4==4.12.3       # HTML 파싱
+cloudscraper==1.2.71         # Cloudflare 우회 및 HTTPS 요청
+certifi==2024.8.30           # 최신 루트 인증서 제공
+urllib3==2.2.3               # HTTPS 연결 관리
+python-dotenv==1.0.1         # 환경 변수 로드
+
+# --- Optional / built-in libraries (for completeness) ---
+requests==2.32.3             # cloudscraper 내부 의존성 (명시적으로 고정)
+idna==3.10                   # SSL 도메인 처리 (urllib3 종속)
+charset-normalizer==3.4.0    # 인코딩 안정화 (requests 종속)
