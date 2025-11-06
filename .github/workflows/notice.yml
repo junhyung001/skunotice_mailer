@@ -5,6 +5,9 @@ on:
     - cron: '0 0 * * *'   # 매일 0시 UTC = 한국 오전 9시
   workflow_dispatch:
 
+permissions:
+  contents: write    # ✅ 리포지토리 파일 쓰기 권한 부여 (중요)
+
 jobs:
   check_notice:
     runs-on: ubuntu-latest
@@ -13,7 +16,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: true  # push 권한 유지
+          persist-credentials: true  # ✅ git push 시 자격 증명 유지
+          token: ${{ secrets.GITHUB_TOKEN }}  # ✅ 자동 제공 토큰으로 인증
 
       - name: Install CA certificates
         run: |
@@ -36,7 +40,6 @@ jobs:
           RECEIVER_EMAILS: ${{ secrets.RECEIVER_EMAILS }}
         run: python main.py
 
-      # ✅ DB 업데이트를 GitHub에 반영
       - name: Commit updated DB
         if: success()
         run: |
