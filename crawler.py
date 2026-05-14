@@ -1,15 +1,44 @@
-import warnings
+import logging
+import re
 import ssl
-import certifi
 import urllib3
+import warnings
+
+import certifi
 import cloudscraper
 from bs4 import BeautifulSoup
-import logging
 
 # ⚙️ SSL 관련 경고 무시
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
 warnings.filterwarnings("ignore", category=UserWarning, module="urllib3")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+def normalize_text(value):
+    return " ".join(str(value or "").split())
+
+
+def extract_notice_id(a_tag):
+    href = a_tag.get("href", "").strip()
+    match = re.search(r"/bbs/[^/]+/\d+/(\d+)/artclView\.do", href)
+    if match:
+        return match.group(1)
+
+    onclick = a_tag.get("onclick", "")
+    match = re.search(r"jf_viewArtcl\('[^']+',\s*'[^']+',\s*'([^']+)'\)", onclick)
+    if match:
+        return match.group(1)
+
+    return None
+
+
+def build_notice_key(notice_id=None, url=None, title="", notice_date=""):
+    if notice_id:
+        return f"id:{normalize_text(notice_id)}"
+    if url:
+        return f"url:{normalize_text(url)}"
+    return f"title_date:{normalize_text(title)}|{normalize_text(notice_date)}"
+
 
 def fetch_notices():
     url = "https://www.sungkyul.ac.kr/computer/4101/subview.do"
@@ -22,7 +51,7 @@ def fetch_notices():
     # ✅ Cloudflare 우회 + SSLContext 적용
     scraper = cloudscraper.create_scraper(
         ssl_context=ssl_context,
-        browser={"browser": "chrome", "platform": "windows", "mobile": False}
+        browser={"browser": "chrome", "platform": "windows", "mobile": False},
     )
 
     try:
@@ -42,15 +71,31 @@ def fetch_notices():
         return []
 
     results = []
-    for row in rows[:5]:
+    for row in rows:
         a_tag = row.select_one("td.td-subject a")
+        date_tag = row.select_one("td.td-date")
         if not a_tag:
             continue
+
         title = a_tag.text.strip()
-        href = a_tag["href"].strip()
+        notice_date = date_tag.text.strip() if date_tag else ""
+        href = a_tag.get("href", "").strip()
         if not href.startswith("http"):
             href = "https://www.sungkyul.ac.kr" + href
-        results.append({"title": title, "link": href})
+
+        notice_id = extract_notice_id(a_tag)
+        notice_key = build_notice_key(notice_id=notice_id, url=href, title=title, notice_date=notice_date)
+
+        results.append(
+            {
+                "title": title,
+                "link": href,
+                "url": href,
+                "date": notice_date,
+                "notice_id": notice_id,
+                "notice_key": notice_key,
+            }
+        )
 
     logging.info(f"✅ {len(results)}개의 공지를 가져왔습니다.")
     print(f"✅ 크롤링 완료 — {len(results)}개의 공지를 가져왔습니다.")

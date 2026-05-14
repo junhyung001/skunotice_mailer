@@ -26,6 +26,7 @@ def send_mail(subject, html_body, recipients, sender_email, sender_password):
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, recipients, msg.as_string())
             logging.info(f"✅ 메일 전송 완료 ({len(recipients)}명): {', '.join(recipients)}")
+            return True
     except smtplib.SMTPAuthenticationError:
         logging.error("❌ 인증 실패: Gmail 앱 비밀번호를 확인하세요.")
     except smtplib.SMTPConnectError:
@@ -34,3 +35,5 @@ def send_mail(subject, html_body, recipients, sender_email, sender_password):
         logging.error("❌ 수신자 주소 거부됨: 이메일 주소 형식 확인 필요.")
     except Exception as e:
         logging.error(f"❌ 메일 전송 중 알 수 없는 오류 발생: {e}")
+
+    return False
