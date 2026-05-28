@@ -2,5 +2,5 @@
 .env
 logs
 # local runtime artifacts
-db.sqlite3
+# db.sqlite3
 __pycache__/
